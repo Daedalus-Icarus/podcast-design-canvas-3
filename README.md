@@ -104,3 +104,41 @@ Maintainer-only operational labels such as active-step labels may exist, but con
 - Run or preserve `lint` before submitting product work.
 - Run or preserve `test` before submitting product work.
 - Run or preserve `preview-build` before submitting product work.
+
+## How to run
+
+Requires Node 18+.
+
+```bash
+npm install        # install dependencies
+npm run dev        # start the dev server (Vite)
+```
+
+Then open the printed local URL, click **New episode**, upload at least two
+synced speaker video files, assign Host / Guest 1 / Guest 2, optionally add
+social links, pick a preset, preview the composed episode, and click
+**Export & download** to produce a real downloadable video file.
+
+### Verification commands
+
+```bash
+npm run typecheck    # tsc -b (type-check the whole project)
+npm run lint         # eslint, no warnings allowed
+npm run test         # vitest run (unit tests)
+npm run preview-build # production build + preview server
+```
+
+### How export works
+
+Export is fully real and client-side. The preview `<canvas>` (which is already
+composing the real uploaded `<video>` streams into the selected layout) is
+captured via `canvas.captureStream()`, the per-speaker audio tracks are mixed
+through a Web Audio `MediaStreamAudioDestinationNode`, and the combined stream
+is recorded with `MediaRecorder` into a downloadable WebM file. Recording runs
+in real time and stops automatically at the end of the longest speaker track.
+
+### Scope of the current step
+
+This implements the first product step: the import-to-export flow. Canvas
+drag-editing, audio cleanup controls, captions/b-roll, and reusable templates
+are intentionally out of scope here and tracked as later steps.
