@@ -15,6 +15,7 @@ function formatTime(sec: number): string {
 export function PreviewScreen() {
   const episode = useEpisodeStore((s) => s.episode);
   const goToStage = useEpisodeStore((s) => s.goToStage);
+  const reset = useEpisodeStore((s) => s.reset);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EpisodeEngine | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -49,7 +50,6 @@ export function PreviewScreen() {
     };
   }, [episode, preset]);
 
-  // time / export-progress ticker
   useEffect(() => {
     if (!playing && !exporting) return;
     const id = window.setInterval(() => {
@@ -65,8 +65,6 @@ export function PreviewScreen() {
     const e = engineRef.current;
     if (!e) return;
     setResult(null);
-    // seek to start so Play works even after a previous playback/export left
-    // the tracks at their end position.
     e.seek(0);
     await e.play(() => setPlaying(false));
     setPlaying(true);
@@ -101,76 +99,123 @@ export function PreviewScreen() {
   };
 
   if (!preset) {
-    return (
-      <div className="banner warn">No preset selected. Go back and choose one.</div>
-    );
+    return <div className="banner warn">No preset selected. Go back and choose one.</div>;
   }
+
+  const progressPct = duration ? Math.min(100, (time / duration) * 100) : 0;
 
   return (
     <div className="stack">
       <div className="card">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <strong>Preview</strong>
-          <span className="tag">preset: {preset.name}</span>
+        <div className="section-title">
+          <div>
+            <div className="card-eyebrow">Step 3</div>
+            <h2 style={{ marginTop: 2 }}>Preview</h2>
+          </div>
+          <span className="tag">{preset.name}</span>
         </div>
-        <div className="preview-wrap" style={{ marginTop: 12 }}>
-          <canvas ref={canvasRef} />
-        </div>
-        {loadError && <div className="banner warn" style={{ marginTop: 10 }}>{loadError}</div>}
 
-        <div className="preview-controls">
+        <div className="preview-stage" style={{ marginTop: 14 }}>
+          <canvas ref={canvasRef} />
+          <div className="stage-tag">
+            <span className="live" />
+            LIVE COMPOSE
+          </div>
+        </div>
+
+        {loadError && (
+          <div className="banner danger" style={{ marginTop: 14 }}>
+            {loadError}
+          </div>
+        )}
+
+        <div className="transport">
           {!playing ? (
-            <button type="button" onClick={onPlay} disabled={exporting}>
-              ▶ Play
+            <button
+              type="button"
+              className="play-btn"
+              onClick={onPlay}
+              disabled={exporting || !!loadError}
+              aria-label="Play"
+            >
+              ▶
             </button>
           ) : (
-            <button type="button" onClick={onPause} disabled={exporting}>
-              ⏸ Pause
+            <button
+              type="button"
+              className="play-btn"
+              onClick={onPause}
+              disabled={exporting}
+              aria-label="Pause"
+            >
+              ⏸
             </button>
           )}
-          <span className="muted">
+          <div className="scrub" aria-hidden="true">
+            <div className="fill" style={{ width: `${progressPct}%` }} />
+          </div>
+          <span className="time-readout">
             {formatTime(time)} / {formatTime(duration)}
           </span>
         </div>
       </div>
 
       <div className="card">
-        <strong>Export</strong>
+        <div className="card-eyebrow">Export</div>
+        <h2 style={{ marginTop: 2 }}>Render &amp; download</h2>
         <p className="muted">
-          Renders a real downloadable video file from your uploaded media using the selected layout.
-          Export runs in real time and stops automatically at the end of the longest track.
+          Produces a real downloadable video from your uploaded media in the selected layout. Rendering
+          runs in real time and stops automatically at the end of the longest track.
         </p>
-        <div className="row" style={{ marginTop: 10 }}>
-          <button
-            type="button"
-            className="primary"
-            onClick={onExport}
-            disabled={exporting || !!loadError}
-          >
-            {exporting ? 'Exporting…' : '⬇ Export & download'}
-          </button>
+
+        <div className="export-panel" style={{ marginTop: 16 }}>
+          <div className="export-cta">
+            <button
+              type="button"
+              className="primary"
+              onClick={onExport}
+              disabled={exporting || !!loadError}
+            >
+              {exporting ? 'Rendering…' : '⬇ Export & download'}
+            </button>
+            {!exporting && !result && (
+              <span className="muted">Ready when you are.</span>
+            )}
+            {exporting && <span className="muted">{Math.round(exportProgress * 100)}%</span>}
+          </div>
+
           {exporting && (
-            <span className="muted">{Math.round(exportProgress * 100)}%</span>
+            <div className="progress-track">
+              <div className="bar" style={{ width: `${Math.round(exportProgress * 100)}%` }} />
+            </div>
+          )}
+
+          {exportError && <div className="banner danger">{exportError}</div>}
+
+          {result && (
+            <div className="result">
+              <div className="result-head">
+                <span className="ok">
+                  <span className="check">✓</span> Export ready
+                </span>
+                <a href={result.url} download={`episode.${extensionFor(result.mimeType)}`}>
+                  Download again
+                </a>
+              </div>
+              <div className="result-meta">
+                {(result.blob.size / 1_000_000).toFixed(1)} MB · {result.mimeType}
+              </div>
+              <video src={result.url} controls />
+            </div>
           )}
         </div>
-        {exportError && <div className="banner warn" style={{ marginTop: 10 }}>{exportError}</div>}
-        {result && (
-          <div className="banner" style={{ marginTop: 10 }}>
-            Export ready ({(result.blob.size / 1_000_000).toFixed(1)} MB, {result.mimeType}). Download
-            started.{' '}
-            <a href={result.url} download={`episode.${extensionFor(result.mimeType)}`}>
-              Download again
-            </a>
-            <video src={result.url} controls style={{ width: '100%', marginTop: 10, borderRadius: 8 }} />
-          </div>
-        )}
       </div>
 
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="actions">
         <button type="button" className="ghost" onClick={() => goToStage('preset')} disabled={exporting}>
-          Back
+          ← Back
         </button>
-        <button type="button" className="ghost" onClick={() => useEpisodeStore.getState().reset()} disabled={exporting}>
+        <button type="button" className="ghost" onClick={reset} disabled={exporting}>
           Start new episode
         </button>
       </div>
