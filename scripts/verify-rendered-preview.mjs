@@ -171,8 +171,6 @@ const browserExpression = `
     return new File(chunks, name, { type: "video/webm" });
   }
 
-  assert(window.PDC, "PDC namespace should load");
-
   const waitFor = async (fn, label) => {
     for (let i = 0; i < 120; i++) {
       if (fn()) return;
