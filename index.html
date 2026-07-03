@@ -19,6 +19,19 @@
         <h2 class="step-title"><span class="num">1</span> Upload speaker videos</h2>
         <p class="hint">Upload a local video for each speaker and add a social link so derived names appear in the preview. Add at least Host and Guest 1.</p>
 
+        <!-- Riverside-style link import: paste a Riverside share link or manifest
+             reference and resolve it into synced Host/Guest 1/Guest 2 tracks through
+             the same preview/export path uploads use. Static controls so automated
+             review can drive the importer through the normal product workflow. -->
+        <div class="riverside-import" id="riverside-import" aria-label="Riverside link import">
+          <div class="riverside-row">
+            <input type="url" id="riverside-link" placeholder="Paste a Riverside share link or manifest reference" autocomplete="off" aria-label="Riverside share link or manifest reference" />
+            <button id="riverside-import-btn" type="button" title="Import synced speaker tracks from a Riverside link">Import link</button>
+          </div>
+          <p class="riverside-status" id="riverside-status" role="status" aria-live="polite"></p>
+        </div>
+
+
         <!-- Static bucket controls (never re-created by JS) so automated review can
              attach files and type social links through the normal product workflow. -->
         <div class="buckets" id="buckets" aria-label="Speaker assignments">
@@ -175,6 +188,7 @@
 
     <script src="app/presets.js"></script>
     <script src="app/episode.js"></script>
+    <script src="app/riverside.js"></script>
     <script src="app/moments.js"></script>
     <script src="app/moment-images.js"></script>
     <script src="app/captions.js"></script>

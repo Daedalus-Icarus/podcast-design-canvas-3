@@ -1,0 +1,12 @@
+{
+  "source": "riverside",
+  "episode": {
+    "title": "Designing for Creators — Sample Episode",
+    "shareLink": "https://riverside.fm/share/podcast-design-canvas-sample"
+  },
+  "tracks": [
+    { "bucket": "host", "name": "Host", "social": "https://x.com/hostperson", "color": "#b91c1c" },
+    { "bucket": "guest1", "name": "Guest 1", "social": "https://x.com/guestperson", "color": "#047857" },
+    { "bucket": "guest2", "name": "Guest 2", "social": "https://x.com/guesttwo", "color": "#2563eb" }
+  ]
+}

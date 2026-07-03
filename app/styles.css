@@ -82,6 +82,44 @@ body {
 }
 .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 
+/* Riverside link import --------------------------------------------------- */
+.riverside-import {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.riverside-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.riverside-row input[type="url"] {
+  flex: 1;
+  min-width: 0;
+  background: #10131d;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.riverside-row button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.riverside-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+.riverside-status { margin: 8px 0 0; color: var(--muted); font-size: 12px; min-height: 14px; }
+.riverside-status.error { color: #ff8b8b; }
+
 /* Uploader ---------------------------------------------------------------- */
 .uploader {
   display: flex;

@@ -85,6 +85,77 @@
     });
   });
 
+  // Riverside-style link import: resolve a pasted share link or manifest
+  // reference into synced Host/Guest 1/Guest 2 media tracks and feed them
+  // through the SAME assign + social-link + preview path that uploads use, so
+  // imported tracks drive the live preview and export identically. No separate
+  // render path, no mocked media — the importer produces real, audible video.
+  const R = PDC.riverside;
+  const riversideInput = $("riverside-link");
+  const riversideBtn = $("riverside-import-btn");
+  const riversideStatus = $("riverside-status");
+  function setRiversideStatus(message, isError) {
+    riversideStatus.textContent = message || "";
+    riversideStatus.classList.toggle("error", !!isError);
+  }
+  async function runRiversideImport() {
+    const parsed = R.parseLink(riversideInput.value);
+    if (!parsed.ok) {
+      setRiversideStatus(parsed.error, true);
+      return;
+    }
+    if (parsed.deferred) {
+      setRiversideStatus("Live Riverside network import is coming soon. For now, use the repo's declared sample link.", true);
+      return;
+    }
+    let manifest = parsed.manifest;
+    if (!manifest && parsed.manifestUrl) {
+      setRiversideStatus("Loading manifest…");
+      try {
+        manifest = await R.fetchManifest(parsed.manifestUrl);
+      } catch (err) {
+        setRiversideStatus(err.message || "Could not load the manifest.", true);
+        return;
+      }
+    }
+    if (!manifest) {
+      setRiversideStatus("The manifest could not be read.", true);
+      return;
+    }
+    riversideBtn.disabled = true;
+    setRiversideStatus("Importing synced speaker tracks…");
+    try {
+      const resolved = await R.resolveManifest(manifest);
+      // Clear any previously assigned/imported media for a clean import.
+      assignedBuckets(episode).forEach(function (bucket) { preview.clear(bucket); });
+      PDC.episode.resetEpisode(episode, { title: resolved.title });
+      resolved.tracks.forEach(function (track) {
+        if (!ingestFile(track.bucket, track.file)) return;
+        if (track.social) {
+          setSocialLink(episode, track.bucket, track.social);
+          const linkInput = document.querySelector('[data-link-bucket="' + track.bucket + '"]');
+          if (linkInput) linkInput.value = track.social;
+          updateBucketRow(track.bucket);
+        }
+      });
+      SPEAKER_BUCKETS.forEach(updateBucketRow);
+      afterMediaChange();
+      const n = resolved.tracks.length;
+      setRiversideStatus("Imported " + n + " synced speaker track" + (n === 1 ? "" : "s") + " from Riverside.");
+    } catch (err) {
+      setRiversideStatus(err.message || "Import failed.", true);
+    } finally {
+      riversideBtn.disabled = false;
+    }
+  }
+  riversideBtn.addEventListener("click", runRiversideImport);
+  riversideInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      runRiversideImport();
+    }
+  });
+
   // Timed visual moments: type + text + start/end times, listed with remove
   // controls. Moments live on the episode model, so they survive preset and
   // template switches; the preview draws whichever are active each frame.
@@ -450,6 +521,8 @@
 
     document.querySelectorAll("input[data-file-bucket]").forEach(function (input) { input.value = ""; });
     document.querySelectorAll("input[data-link-bucket]").forEach(function (input) { input.value = ""; });
+    riversideInput.value = "";
+    setRiversideStatus("");
     $("moment-text").value = "";
     $("moment-start").value = "";
     $("moment-duration").value = "";
