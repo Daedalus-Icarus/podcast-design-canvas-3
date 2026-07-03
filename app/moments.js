@@ -9,8 +9,8 @@
 (function () {
   const PDC = (window.PDC = window.PDC || {});
 
-  const MOMENT_TYPES = ["title", "callout", "image"];
-  const TYPE_LABELS = { title: "Episode title", callout: "Callout", image: "B-roll image" };
+  const MOMENT_TYPES = ["title", "callout", "image", "caption"];
+  const TYPE_LABELS = { title: "Episode title", callout: "Callout", image: "B-roll image", caption: "Caption" };
   let seq = 0;
 
   function ensureMoments(episode) {

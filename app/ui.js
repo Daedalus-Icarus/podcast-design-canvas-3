@@ -115,7 +115,7 @@
       li.dataset.momentType = m.type;
       const kind = document.createElement("span");
       kind.className = "moment-kind " + m.type;
-      kind.textContent = m.type === "title" ? "Title" : (m.type === "image" ? "B-roll" : "Callout");
+      kind.textContent = m.type === "title" ? "Title" : (m.type === "image" ? "B-roll" : (m.type === "caption" ? "Caption" : "Callout"));
       const text = document.createElement("span");
       text.className = "moment-text";
       text.textContent = m.type === "image" ? m.imageName : m.text;
@@ -197,6 +197,73 @@
     } else {
       preview.drawFrame();
     }
+  });
+
+  // Caption import: turn an uploaded/pasted WebVTT or SRT transcript into timed
+  // caption MOMENTS in the list above. Importing never clears uploaded videos,
+  // the selected preset, social links, or existing moments — an invalid or empty
+  // file only shows a recoverable error and changes nothing else.
+  const C = PDC.captions;
+  function showCaptionError(message) {
+    const el = $("caption-error");
+    el.textContent = message || "";
+    el.hidden = !message;
+  }
+  function setCaptionStatus(message) {
+    $("caption-status").textContent = message || "";
+  }
+  async function readFileText(file) {
+    if (typeof file.text === "function") return file.text();
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader();
+      reader.onload = function () { resolve(String(reader.result || "")); };
+      reader.onerror = function () { reject(reader.error || new Error("Could not read the file.")); };
+      reader.readAsText(file);
+    });
+  }
+  function applyCaptionText(text, sourceLabel) {
+    const result = C.importCaptionMoments(episode, text);
+    if (!result.ok) {
+      showCaptionError(result.error);
+      setCaptionStatus("");
+      return false;
+    }
+    showCaptionError("");
+    setCaptionStatus(result.count + " caption moment" + (result.count === 1 ? "" : "s") + " imported" + (sourceLabel ? " from " + sourceLabel : "") + " — see the list below.");
+    renderMomentList();
+    // Jump the timeline onto the first caption so it is immediately visible.
+    const caps = C.captionMoments(episode);
+    if (caps.length && canCompose(episode)) {
+      const c0 = caps[0];
+      preview.seekTo(Math.min(c0.end - 0.05, c0.start + Math.max(0.1, (c0.end - c0.start) / 2)));
+    } else {
+      preview.drawFrame();
+    }
+    return true;
+  }
+  $("caption-file").addEventListener("change", async function () {
+    const file = $("caption-file").files && $("caption-file").files[0];
+    if (!file) return;
+    let text;
+    try {
+      text = await readFileText(file);
+    } catch (e) {
+      showCaptionError("That caption file could not be read.");
+      setCaptionStatus("");
+      $("caption-file").value = "";
+      return;
+    }
+    if (applyCaptionText(text, file.name)) $("caption-text").value = text;
+    $("caption-file").value = "";
+  });
+  $("caption-load").addEventListener("click", function () {
+    const text = $("caption-text").value;
+    if (!text.trim()) {
+      showCaptionError("Paste WebVTT or SRT caption text (or upload a file) first.");
+      setCaptionStatus("");
+      return;
+    }
+    applyCaptionText(text, "pasted text");
   });
 
   // Scrub bar: jump the shared preview timeline to any time — scheduled
@@ -379,6 +446,10 @@
     $("moment-start").value = "";
     $("moment-end").value = "";
     showMomentError("");
+    $("caption-file").value = "";
+    $("caption-text").value = "";
+    setCaptionStatus("");
+    showCaptionError("");
     renderMomentList();
 
     $("export-progress").hidden = true;

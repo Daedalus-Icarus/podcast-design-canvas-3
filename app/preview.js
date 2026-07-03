@@ -200,6 +200,9 @@
 
       canvasEl.dataset.preset = episodeRef.presetId;
       canvasEl.dataset.speakers = String(buckets.length);
+      canvasEl.dataset.caption = (PDC.moments &&
+        PDC.moments.activeMoments(episodeRef, referenceTime).some(function (m) { return m.type === "caption"; }))
+        ? "1" : "0";
     }
 
     // Timed visual moments are painted straight onto the stage canvas, over the
@@ -217,7 +220,36 @@
       active.forEach(function (moment) {
         if (moment.type === "title") drawTitleMoment(moment, w, h);
         else if (moment.type === "callout") drawCalloutMoment(moment, w, h);
+        else if (moment.type === "caption") drawCaptionMoment(moment, w, h);
         else drawImageMoment(moment, w, h);
+      });
+      ctx.restore();
+    }
+
+    // Caption: an imported-transcript cue rendered as a centered lower subtitle
+    // band (distinct from the left-anchored callout and the top title bar), so a
+    // full transcript reads like burned-in captions. Export records this canvas,
+    // so caption moments burn into the output at their cue times on any layout.
+    function drawCaptionMoment(moment, w, h) {
+      const lines = String(moment.text).split("\n").slice(0, 3);
+      ctx.save();
+      ctx.font = "600 " + Math.round(h * 0.045) + "px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const lineH = Math.round(h * 0.058);
+      const padX = Math.round(w * 0.022);
+      const padY = Math.round(h * 0.016);
+      let maxW = 0;
+      lines.forEach(function (ln) { maxW = Math.max(maxW, ctx.measureText(ln).width); });
+      const boxW = Math.min(Math.round(w * 0.9), Math.round(maxW) + padX * 2);
+      const boxH = lines.length * lineH + padY * 2;
+      const boxX = Math.round((w - boxW) / 2);
+      const boxY = Math.round(h * 0.9) - boxH; // banner bottom sits at ~0.9h, above speaker tags
+      ctx.fillStyle = "rgba(5, 7, 12, 0.82)";
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.fillStyle = "#ffffff";
+      lines.forEach(function (ln, i) {
+        ctx.fillText(ln, w / 2, boxY + padY + lineH * (i + 0.5), boxW - padX * 2);
       });
       ctx.restore();
     }

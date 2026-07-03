@@ -95,13 +95,14 @@
         </div>
 
         <h2 class="step-title"><span class="num">4</span> Add timed visual moments</h2>
-        <p class="hint">Schedule an episode title or a callout/reference to appear over the composed preview — and the exported video — only during its time range (seconds or M:SS).</p>
+        <p class="hint">Schedule an episode title, callout/reference, b-roll image, or caption to appear over the composed preview — and the exported video — only during its time range (seconds or M:SS). Or import a whole transcript as timed captions below.</p>
         <div class="moments" id="moments">
           <div class="moment-form">
             <select id="moment-type" aria-label="Moment type">
               <option value="title">Episode title</option>
               <option value="callout">Callout</option>
               <option value="image">B-roll image</option>
+              <option value="caption">Caption</option>
             </select>
             <input id="moment-text" type="text" placeholder="Text to display" aria-label="Moment text" autocomplete="off" />
             <label class="moment-image-field">
@@ -114,6 +115,23 @@
           </div>
           <p class="moment-image-status" id="moment-image-status" aria-live="polite"></p>
           <p class="moment-error" id="moment-error" role="alert" hidden></p>
+
+          <div class="caption-import" id="caption-import">
+            <p class="caption-import-title">Import captions from a transcript (WebVTT / SRT)</p>
+            <p class="hint">Upload a .vtt or .srt caption file, or paste transcript text — each timed cue becomes a caption moment in the list below.</p>
+            <label class="caption-upload">
+              <span>Upload caption file</span>
+              <input id="caption-file" type="file" accept=".vtt,.srt,.txt,text/vtt,application/x-subrip,text/plain" aria-label="Upload WebVTT or SRT caption file" />
+            </label>
+            <label class="caption-paste">
+              <span>…or paste WebVTT / SRT text</span>
+              <textarea id="caption-text" rows="4" placeholder="WEBVTT&#10;&#10;00:00:00.000 --> 00:00:03.000&#10;Welcome to the show&#10;&#10;00:00:04.000 --> 00:00:07.000&#10;Today's topic" aria-label="Paste WebVTT or SRT caption text" autocomplete="off"></textarea>
+            </label>
+            <button id="caption-load" type="button">Import captions</button>
+            <p class="caption-status" id="caption-status" aria-live="polite"></p>
+            <p class="caption-error" id="caption-error" role="alert" hidden></p>
+          </div>
+
           <ul class="moment-list" id="moment-list" aria-label="Scheduled moments"></ul>
         </div>
 
@@ -150,7 +168,7 @@
         <p class="hint" id="customize-hint" hidden>Drag a frame to reposition it, or drag its bottom-right corner to resize. Then save it as a reusable template.</p>
         <div class="export-progress" id="export-progress" hidden><div class="bar" id="export-bar"></div></div>
         <div class="export-result" id="export-result" hidden></div>
-        <p class="scope-note">Automatic captions, external b-roll picking, and transcript editing are intentionally out of scope for this step.</p>
+        <p class="scope-note">Automatic transcription, speaker diarization, and AI caption rewriting are intentionally out of scope for this step (bring your own WebVTT/SRT transcript).</p>
       </section>
     </main>
 
@@ -158,6 +176,7 @@
     <script src="app/episode.js"></script>
     <script src="app/moments.js"></script>
     <script src="app/moment-images.js"></script>
+    <script src="app/captions.js"></script>
     <script src="app/templates.js"></script>
     <script src="app/preview.js"></script>
     <script src="app/exporter.js"></script>
